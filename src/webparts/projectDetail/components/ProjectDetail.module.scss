@@ -48,6 +48,15 @@
   align-items: "center";
   padding: "20px 1px 1px 20px";
 }
+.choice_group_container{
+  display: flex; /* or inline-flex */
+  flex-wrap: wrap;
+  gap: 16px;
+}
+.choice_group_item{
+  flex-grow: 4;
+  padding: 20px;
+}
 .project_level_title{
   min-width:70px;
   color: white;

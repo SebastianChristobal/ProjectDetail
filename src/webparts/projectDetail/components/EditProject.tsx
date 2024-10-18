@@ -1,5 +1,6 @@
 import * as React from "react";
 import { IProjectDetailProps } from "./IProjectDetailProps";
+import Styles from "../components/ProjectDetail.module.scss";
 import { Modal } from "./UI/Modal";
 //import { spfi, SPFx } from "@pnp/sp";
 import { Dropdown, IDropdownOption } from "@fluentui/react/lib/Dropdown";
@@ -297,8 +298,8 @@ export const EditProject: React.FC<IProjectDetailProps> = ({
             //defaultSelectedUsers={this.state.selectedUsers}
             resolveDelay={1000}
           />
-          <div className="h-56 mt-8 grid grid-cols-3 gap-4 content-start ...">
-            <div>
+          <div className={Styles.choice_group_container}>
+            <div className={Styles.choice_group_item}>
               <ChoiceGroup
                 selectedKey={selectedKeyResources}
                 options={options}
@@ -306,7 +307,7 @@ export const EditProject: React.FC<IProjectDetailProps> = ({
                 label="Resources"
               />
             </div>
-            <div>
+            <div className={Styles.choice_group_item}>
               <ChoiceGroup
                 selectedKey={selectedKeyTime}
                 options={options}
@@ -314,7 +315,7 @@ export const EditProject: React.FC<IProjectDetailProps> = ({
                 label="Time"
               />
             </div>
-            <div>
+            <div className={Styles.choice_group_item}>
               <ChoiceGroup
                 selectedKey={selectedKeyBudget}
                 options={options}
