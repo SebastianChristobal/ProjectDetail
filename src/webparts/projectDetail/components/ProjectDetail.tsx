@@ -4,12 +4,20 @@ import {
   useEffect,
   //  useCallback
 } from "react";
+import { Spinner } from "@fluentui/react/lib/Spinner";
+import { IStackTokens, Stack } from "@fluentui/react/lib/Stack";
+import { Label } from "@fluentui/react/lib/Label";
 import type { IProjectDetailProps } from "./IProjectDetailProps";
 import useFetch from "./hooks/useFetch";
 import { SelectedProject } from "./SelectedProject";
 import { fetchProjects, fetchFaser } from "./service/SPService";
 import { fetchProjectTypes } from "./service/SPService";
 import { DummyActivities, DummyControlpoints } from "./Dummys/DummyTodos";
+
+const stackTokens: IStackTokens = {
+  childrenGap: 20,
+  maxWidth: 250,
+};
 
 export const ProjectDetail: React.FC<IProjectDetailProps> = (props) => {
   const { context } = props;
@@ -62,7 +70,7 @@ export const ProjectDetail: React.FC<IProjectDetailProps> = (props) => {
     const id: string | undefined = window.location.href.split("=").pop();
     selectedObjectId = id ? parseInt(id, 10) : 0;
     selectedProject = projectState.projects.find(
-      (project: any) => project.Id === 2
+      (project: any) => project.Id === selectedObjectId
     );
   }
 
@@ -81,7 +89,12 @@ export const ProjectDetail: React.FC<IProjectDetailProps> = (props) => {
         selectedObjectId={selectedObjectId}
       />
     ) : (
-      <p>Loading...</p>
+      <Stack tokens={stackTokens}>
+        <div>
+          <Label>Spinner with label positioned below</Label>
+          <Spinner label="I am definitely loading..." />
+        </div>
+      </Stack>
     );
 
   return <main>{content}</main>;
