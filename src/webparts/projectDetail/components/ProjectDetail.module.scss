@@ -1,0 +1,97 @@
+@import '~@fluentui/react/dist/sass/References.scss';
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.projectDetail {
+  overflow: hidden;
+  padding: 1em;
+  color: "[theme:bodyText, default: #323130]";
+  color: var(--bodyText);
+  &.teams {
+    font-family: $ms-font-family-fallbacks;
+  }
+}
+.header {
+  font-size:26px;
+  font-style: bold;
+  margin:0;
+  color:white;
+}
+.item_header{
+  padding: 4px;
+  margin: 0px;
+  color:white;
+}
+.item_title{
+  padding: 4px;
+  margin: 0px;
+  color: white;
+}
+.container {
+  display: flex; /* or inline-flex */
+  flex-wrap: wrap;
+  gap: 16px;
+  background-color:#1c1a1a;
+  border-radius: 15px 15px 0px 0px;
+}
+.item{
+  flex-grow: 4;
+  padding: 20px;
+}
+.tabs{
+  padding-top: 40px;
+}
+.project_level_container{
+  width: "100%";
+  display: "flex";
+  align-items: "center";
+  padding: "20px 1px 1px 20px";
+}
+.project_level_title{
+  min-width:70px;
+  color: white;
+}
+.progressIndicator{
+    border-radius: 0 0 20px 20px;
+    border-style: solid;
+    border-top: none;
+    border-bottom: none;
+    border-width: thin;
+    line-height: 7px;
+    border-right: none;
+    margin-top: 30px;
+    display: inline-block;
+    padding: 10px 20px 25px 20px;
+}
+
+.image_container{
+  text-align:center;
+  
+}
+.edit_button{
+  text-align: right;
+  padding: 60px 20px 0px 0px;
+}
+.welcome {
+  text-align: center;
+}
+
+.welcomeImage {
+  width: 100%;
+  max-width: 420px;
+}
+
+.links {
+  a {
+    text-decoration: none;
+    color: "[theme:link, default:#03787c]";
+    color: var(--link); // note: CSS Custom Properties support is limited to modern browsers only
+
+    &:hover {
+      text-decoration: underline;
+      color: "[theme:linkHovered, default: #014446]";
+      color: var(--linkHovered); // note: CSS Custom Properties support is limited to modern browsers only
+    }
+  }
+}
