@@ -6,7 +6,6 @@ import {
 } from "react";
 import { Spinner } from "@fluentui/react/lib/Spinner";
 import { IStackTokens, Stack } from "@fluentui/react/lib/Stack";
-import { Label } from "@fluentui/react/lib/Label";
 import type { IProjectDetailProps } from "./IProjectDetailProps";
 import useFetch from "./hooks/useFetch";
 import { SelectedProject } from "./SelectedProject";
