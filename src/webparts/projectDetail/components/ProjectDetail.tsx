@@ -91,8 +91,7 @@ export const ProjectDetail: React.FC<IProjectDetailProps> = (props) => {
     ) : (
       <Stack tokens={stackTokens}>
         <div>
-          <Label>Spinner with label positioned below</Label>
-          <Spinner label="I am definitely loading..." />
+          <Spinner label="loading..." />
         </div>
       </Stack>
     );
