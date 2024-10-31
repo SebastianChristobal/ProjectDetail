@@ -8,16 +8,22 @@ const buttonStyles = { root: { marginRight: 8 } };
 export const EditPanel: React.FC<IProjectDetailProps> = ({
   edit,
   onClose,
+  onSave,
   children,
 }) => {
   const dismissPanel = React.useCallback((): void => {
     onClose();
-  }, []);
+  }, [onClose]);
+  const onSaveProject = React.useCallback((): void => {
+    if (onSave) {
+      onSave();
+    }
+  }, [onSave]);
 
   const onRenderFooterContent = React.useCallback(
     () => (
       <div>
-        <PrimaryButton onClick={dismissPanel} styles={buttonStyles}>
+        <PrimaryButton onClick={onSaveProject} styles={buttonStyles}>
           Save
         </PrimaryButton>
         <DefaultButton onClick={dismissPanel}>Cancel</DefaultButton>
@@ -37,7 +43,7 @@ export const EditPanel: React.FC<IProjectDetailProps> = ({
         type={PanelType.medium}
         // You MUST provide this prop! Otherwise screen readers will just say "button" with no label.
       >
-        <p>{children}</p>
+        {children}
       </Panel>
     </>
   );

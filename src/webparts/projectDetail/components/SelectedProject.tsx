@@ -45,8 +45,7 @@ export const SelectedProject: React.FC<IProjectDetailProps> = ({
   // onDelete,
   // addTask,
   // deleteTask,
-  selectedObjectId,
-  faser,
+  steps,
   projectTypes,
   controlPoints,
   activities,
@@ -64,17 +63,18 @@ export const SelectedProject: React.FC<IProjectDetailProps> = ({
   // const handleLinkClick = (event: any): void => {
   //   console.log(event.target.value);
   // };
-
+  console.log(project);
   const content =
     project !== undefined ? (
       <div>
         <ProjectInformation
           project={project}
           projectTypes={projectTypes}
+          steps={steps}
           {...props}
         />
         <div className={Styles.progressIndicator}>
-          <ProgressIndicator project={project} faser={faser} />
+          <ProgressIndicator project={project} steps={steps} />
         </div>
         <div className={Styles.tabs}>
           <Pivot

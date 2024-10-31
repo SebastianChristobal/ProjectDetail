@@ -1,8 +1,4 @@
 import * as React from "react";
-import { IProjectDetailProps } from "./IProjectDetailProps";
-import Styles from "../components/ProjectDetail.module.scss";
-import { Modal } from "./UI/Modal";
-//import { spfi, SPFx } from "@pnp/sp";
 import { Dropdown, IDropdownOption } from "@fluentui/react/lib/Dropdown";
 import { TextField } from "office-ui-fabric-react";
 import {
@@ -14,6 +10,12 @@ import {
   PrincipalType,
   IPeoplePickerContext,
 } from "@pnp/spfx-controls-react/lib/PeoplePicker";
+import { IProjectDetailProps } from "./IProjectDetailProps";
+import Styles from "../components/ProjectDetail.module.scss";
+import { EditPanel } from "./UI/Panel";
+import { onUpdateProject } from "./service/SPService";
+import { spfi, SPFx } from "@pnp/sp";
+
 import { IUser } from "./models/IUser";
 
 const options: IChoiceGroupOption[] = [
@@ -24,11 +26,13 @@ const options: IChoiceGroupOption[] = [
 
 export const EditProject: React.FC<IProjectDetailProps> = ({
   project,
-  projectTypes,
   context,
+  onEdit,
+  steps,
+  closePanel,
+  projectTypes,
 }) => {
-  const modalRef = React.useRef<any>(null);
-  // const sp = spfi().using(SPFx(context));
+  const sp = spfi().using(SPFx(context));
   const getStatusChoiceGroup = (status: string): any => {
     switch (status) {
       case "Low":
@@ -41,105 +45,30 @@ export const EditProject: React.FC<IProjectDetailProps> = ({
         return "1"; // You can set a default color for other cases
     }
   };
-  const [selectedKeyResources, setSelectedKeyResources] = React.useState<
-    string | undefined
-  >(() => getStatusChoiceGroup(project.Resources));
-  const [selectedKeyTime, setSelectedKeyTime] = React.useState<
-    string | undefined
-  >(() => getStatusChoiceGroup(project.Time));
-  const [selectedKeyBudget, setSelectedKeyBudget] = React.useState<
-    string | undefined
-  >(() => getStatusChoiceGroup(project.Budget));
 
-  const onChangeChoiceGroupTime = React.useCallback(
-    (ev: React.SyntheticEvent<HTMLElement>, option: IChoiceGroupOption) => {
-      setSelectedKeyTime(option.key);
-    },
-    []
+  const [isEditing, setIsEditing] = React.useState<boolean>(onEdit);
+  const [editProject, setEditProject] = React.useState<any | undefined>(
+    undefined
   );
-  const onChangeChoiceGroupResources = React.useCallback(
-    (ev: React.SyntheticEvent<HTMLElement>, option: IChoiceGroupOption) => {
-      setSelectedKeyResources(option.key);
-    },
-    []
-  );
-  const onChangeChoiceGroupBudget = React.useCallback(
-    (ev: React.SyntheticEvent<HTMLElement>, option: IChoiceGroupOption) => {
-      setSelectedKeyBudget(option.key);
-    },
-    []
-  );
-
-  const peoplePickerContext: IPeoplePickerContext = {
-    absoluteUrl: context.pageContext.web.absoluteUrl,
-    msGraphClientFactory: context.msGraphClientFactory,
-    spHttpClient: context.spHttpClient,
-  };
-  console.log(peoplePickerContext);
-
-  const editProject = {
-    projectID: project.ID,
-    title: project.Title,
-    customer: project.Customer,
-    projectManager: [project.ProjectManager.Title],
-    projectLeader: [project.ProjectLeader.Title],
-    projectMembers: project.ProjectMembers.map((members: any) => {
-      return members.Title;
-    }),
-    projectTypeID: project.ProjectType.ID,
-    resources: project.Resources,
-    time: project.Time,
-    budget: project.Budget,
-  };
-
   const [titleValue, setTitleValue] = React.useState<string>("");
+  const [budgetValue, setBudgetValue] = React.useState<string>("");
+  const [resourcesValue, setResourcesValue] = React.useState<string>("");
+  const [timeValue, setTimeValue] = React.useState<string>("");
   const [customerValue, setCustomerValue] = React.useState<string>("");
   const [projectManager, setProjectManager] = React.useState<IUser[]>([]);
   const [responsibleManager, setResponsibleManager] = React.useState<IUser[]>(
     []
   );
-
   const [projectMembers, setprojectMembers] = React.useState<IUser[]>([]);
-
   const [dropdownOption, setDropdownOption] = React.useState<IDropdownOption[]>(
     []
   );
-  const [selectedOption, setSelectedOption] = React.useState<any>(
-    !editProject.projectTypeID ? null : editProject.projectTypeID
+  const [dropdownStepsOption, setDropdownStepsOption] = React.useState<any[]>(
+    []
   );
-
-  React.useEffect(() => {
-    const dropdownOptions = projectTypes.map((option: any) => ({
-      key: option.Id,
-      text: option.Title,
-    }));
-
-    setDropdownOption(dropdownOptions);
-  }, [projectTypes]);
-
-  const _onOptionsChange = (
-    event: React.FormEvent<HTMLDivElement>,
-    option?: IDropdownOption,
-    index?: number
-  ): void => {
-    setSelectedOption(option?.key);
-  };
-  //   React.useEffect(() => {
-  //     const dropdownOptions = projectTypes.map((option: any) => ({
-  //       key: option.Id,
-  //       text: option.Title,
-  //     }));
-
-  //     setDropdownOption(dropdownOptions);
-  //   }, [projectTypes]);
-
-  //   const _onOptionsChange = (
-  //     event: React.FormEvent<HTMLDivElement>,
-  //     option?: IDropdownOption,
-  //     index?: number
-  //   ): void => {
-  //     setSelectedOption(option?.key);
-  //   };
+  const [selectedOption, setSelectedOption] = React.useState<any>(
+    project.ProjectType
+  );
 
   const _getProjectManager = (props: IUser[]): void => {
     setProjectManager(props);
@@ -150,195 +79,331 @@ export const EditProject: React.FC<IProjectDetailProps> = ({
   const _getProjectMembers = (props: IUser[]): void => {
     setprojectMembers(props);
   };
+  const [selectedKeyResources, setSelectedKeyResources] = React.useState<
+    string | undefined
+  >(() => getStatusChoiceGroup(project.Resources));
+
+  const [selectedKeyTime, setSelectedKeyTime] = React.useState<
+    string | undefined
+  >(() => getStatusChoiceGroup(project.Time));
+
+  const [selectedKeyBudget, setSelectedKeyBudget] = React.useState<
+    string | undefined
+  >(() => getStatusChoiceGroup(project.Budget));
+
+  const [selectedKeySteps, setSelectedKeySteps] = React.useState<
+    string | undefined
+  >(() => project.Faser.Title);
+
+  const peoplePickerContext: IPeoplePickerContext = {
+    absoluteUrl: context.pageContext.web.absoluteUrl,
+    msGraphClientFactory: context.msGraphClientFactory,
+    spHttpClient: context.spHttpClient,
+  };
+
+  React.useEffect(() => {
+    if (project) {
+      // Skapa objektet och sätt det i state
+      const newEditProject: any = {
+        projectID: project.ID,
+        title: project.Title,
+        customer: project.Customer,
+        projectManager: [project.ProjectManager],
+        projectLeader: [project.ProjectLeader],
+        projectMembers: project.ProjectMembers.map((members: IUser) => {
+          return members.Title;
+        }),
+        projectType: project.ProjectType,
+        resources: project.Resources,
+        time: project.Time,
+        budget: project.Budget,
+        steps: project.Faser,
+      };
+
+      setEditProject(newEditProject);
+      setTitleValue(newEditProject.title);
+      setCustomerValue(newEditProject.customer);
+      setProjectManager(newEditProject.projectManager);
+      setResponsibleManager(newEditProject.projectLeader);
+      setprojectMembers(newEditProject.projectMembers);
+      setBudgetValue(newEditProject.budget);
+      setTimeValue(newEditProject.time);
+      setResourcesValue(newEditProject.resources);
+      setSelectedKeyResources(getStatusChoiceGroup(newEditProject.resources));
+      setSelectedKeyTime(getStatusChoiceGroup(newEditProject.time));
+      setSelectedKeyBudget(getStatusChoiceGroup(newEditProject.budget));
+      setSelectedKeySteps(project.Faser.ID);
+      setSelectedOption(newEditProject.projectType);
+    }
+  }, [project]);
+
+  React.useEffect(() => {
+    setIsEditing(onEdit);
+  }, [onEdit]);
+
+  React.useEffect(() => {
+    const dropdownOptions = projectTypes.map((option: any) => ({
+      key: option.Id,
+      text: option.Title,
+    }));
+
+    setDropdownOption(dropdownOptions);
+  }, [projectTypes]);
+
+  React.useEffect(() => {
+    const dropdownOptions = steps.map((option: any) => ({
+      key: option.Id,
+      text: option.Title,
+    }));
+
+    setDropdownStepsOption(dropdownOptions);
+  }, [projectTypes]);
+  const onChangeChoiceGroupSteps = React.useCallback(
+    (ev: React.SyntheticEvent<HTMLElement>, option: IChoiceGroupOption) => {
+      setSelectedKeySteps(option.key);
+    },
+    []
+  );
+  const onChangeChoiceGroupTime = React.useCallback(
+    (ev: React.SyntheticEvent<HTMLElement>, option: IChoiceGroupOption) => {
+      setSelectedKeyTime(option.key);
+      setTimeValue(option.text);
+    },
+    []
+  );
+  const onChangeChoiceGroupResources = React.useCallback(
+    (ev: React.SyntheticEvent<HTMLElement>, option: IChoiceGroupOption) => {
+      setSelectedKeyResources(option.key);
+      setResourcesValue(option.text);
+    },
+    []
+  );
+  const onChangeChoiceGroupBudget = React.useCallback(
+    (ev: React.SyntheticEvent<HTMLElement>, option: IChoiceGroupOption) => {
+      setSelectedKeyBudget(option.key);
+      setBudgetValue(option.text);
+    },
+    []
+  );
+
   const _onTitleTextFieldChange = (
     event: React.FormEvent<HTMLInputElement | HTMLTextAreaElement>,
     newValue?: any
   ): void => {
+    console.log("Title Value Changed:", newValue); // Logga för felsökning
     setTitleValue(newValue);
   };
   const _onCustomerTextFieldChange = (
     event: React.FormEvent<HTMLInputElement | HTMLTextAreaElement>,
     newValue?: any
   ): void => {
+    console.log("Customer Value Changed:", newValue); // Logga för felsökning
     setCustomerValue(newValue);
   };
 
-  //   const handleSave = async (): Promise<void> => {
-  //     const enteredTitle = titleValue ? titleValue : "";
-  //     const enteredCustomer = customerValue ? customerValue : "";
-  //     const enteredProjectType = selectedOption ? selectedOption : "";
-  //     const enteredProjectManager = projectManager ? projectManager[0].id : "";
-  //     const enteredResponsibleManager = responsibleManager
-  //       ? responsibleManager[0].id
-  //       : "";
-  //     const selectedMember: string[] = [];
-  //     projectMembers.map(async (items: IUser) => {
-  //       const user: any = await sp.web.ensureUser(items.id);
-  //       selectedMember.push(user.data.Id);
-  //     });
+  const _onOptionsChange = (
+    event: React.FormEvent<HTMLDivElement>,
+    option?: IDropdownOption,
+    index?: number
+  ): void => {
+    setSelectedOption(option?.key);
+  };
 
-  //     if (
-  //       enteredTitle.trim() === "" ||
-  //       enteredCustomer.trim() === "" ||
-  //       enteredProjectType === "" ||
-  //       enteredCustomer.trim() === ""
-  //       //   enteredProjectManager === "" ||
-  //       //   enteredResponsibleManager === "" ||
-  //       //   enteredMembers === ""
-  //     ) {
-  //       if (modalRef.current) {
-  //         modalRef.current.open();
-  //       }
-  //       return;
-  //     }
-  //     const selectedProjectManager = await sp.web.ensureUser(
-  //       enteredProjectManager
-  //     );
-  //     const selectedResponsibleManager = await sp.web.ensureUser(
-  //       enteredResponsibleManager
-  //     );
+  const handleClose = React.useCallback(() => {
+    setIsEditing(false);
+    closePanel();
+  }, []);
 
-  //     const newProject = {
-  //       title: enteredTitle,
-  //       customer: enteredCustomer,
-  //       projectType: enteredProjectType,
-  //       manager: selectedProjectManager.data.Id,
-  //       responsibleManager: selectedResponsibleManager.data.Id,
-  //       members: selectedMember,
-  //     };
-  //     console.log(newProject);
+  const handleSave = async (): Promise<void> => {
+    setIsEditing(false);
+    closePanel();
+    const enteredTitle =
+      titleValue.trim() !== "" ? titleValue : editProject.title;
 
-  //     // if (onAddProject) {
-  //     //   onAddProject(newProject);
-  //     // }
-  //   };
-  console.log(
-    customerValue,
-    titleValue,
-    projectManager,
-    responsibleManager,
-    projectMembers,
-    editProject,
-    context
-  );
+    const enteredCustomer =
+      customerValue.trim() !== "" ? customerValue : editProject.customer;
+
+    const enteredProjectType = selectedOption.ID || editProject.projectType.ID;
+
+    const enteredProjectManager =
+      projectManager.length > 0
+        ? projectManager[0].EMail
+        : editProject.projectManager[0].EMail;
+
+    const enteredResponsibleManager =
+      responsibleManager.length > 0
+        ? responsibleManager[0].EMail
+        : editProject.projectLeader[0].Email;
+
+    const enteredProjectMembers =
+      projectMembers.length > 0
+        ? projectMembers[0].EMail
+        : editProject.projectMembers[0].Email;
+
+    const enteredResources = resourcesValue || editProject.resources;
+    const enteredTime = timeValue || editProject.time;
+    const enteredBudget = budgetValue || editProject.budget;
+    //const enteredSteps = selectedKeySteps || editProject.steps.Title;
+
+    const selectedProjectManager = await sp.web.ensureUser(
+      enteredProjectManager
+    );
+    const selectedResponsibleManager = await sp.web.ensureUser(
+      enteredResponsibleManager
+    );
+    const selectedProjectMembers = await Promise.all(
+      enteredProjectMembers.map(async (member: any) => {
+        const user = await sp.web.ensureUser(member);
+        return user.data.Id;
+      })
+    );
+
+    console.log(
+      selectedProjectMembers,
+      selectedResponsibleManager,
+      selectedProjectManager,
+      enteredResources,
+      enteredTime,
+      enteredBudget,
+      enteredProjectType
+    );
+    const newProject = {
+      Title: enteredTitle,
+      Customer: enteredCustomer,
+      //ProjectType: { ID: enteredProjectType },
+      ProjectManager: selectedProjectManager.data.Id,
+      // ProjectLeader: selectedResponsibleManager.data.Id,
+      // ProjectMembers: selectedProjectMembers,
+      // //Faser: Number(enteredSteps),
+      Resources: enteredResources,
+      Time: enteredTime,
+      Budget: enteredBudget,
+    };
+    console.log(newProject);
+
+    try {
+      await onUpdateProject(newProject, editProject.projectID, context);
+    } catch (error) {
+      console.error("Error saving project:", error);
+    }
+  };
 
   return (
     <>
-      <Modal ref={modalRef}>
-        <h2 className="text-xl font-bold text-gray-700 my-2">Invalid input</h2>
-        <p className="text-gray-600 ">
-          Oops... lokks like you have forgot to enter a value
-        </p>
-        <p className="text-gray-600 ">
-          Please make sure you provide a valid value for every input field
-        </p>
-      </Modal>
-      <div className="w-4/4 mt-4">
-        <div>
-          <TextField
-            label="Rubrik"
-            // errorMessage="Error message"
-            required={true}
-            value={editProject.title}
-            onChange={_onTitleTextFieldChange}
-          />
-          <TextField
-            label="Kund"
-            required={true}
-            value={editProject.customer}
-            onChange={_onCustomerTextFieldChange}
-          />
-          <Dropdown
-            placeholder="välj projekttyp"
-            label="Projekttyp"
-            options={dropdownOption}
-            selectedKey={selectedOption}
-            onChange={_onOptionsChange}
-            required={true}
-            defaultSelectedKey={selectedOption}
-            //defaultValue={editProject.projectTypeTitle}
-            // onChange={dropdownOpt}
-          />
-          <PeoplePicker
-            context={peoplePickerContext}
-            titleText="Projektledare"
-            personSelectionLimit={2}
-            showtooltip={true}
-            required={true}
-            defaultSelectedUsers={editProject.projectManager}
-            onChange={_getProjectManager}
-            //showHiddenInUI={false}
-            principalTypes={[PrincipalType.User]}
-            //defaultSelectedUsers={this.state.selectedUsers}
-            resolveDelay={1000}
-          />
-          <PeoplePicker
-            context={peoplePickerContext}
-            titleText="Projektansvarig"
-            personSelectionLimit={1}
-            //showtooltip={true}
-            required={true}
-            defaultSelectedUsers={editProject.projectLeader}
-            onChange={_getResponsibleManager}
-            //showHiddenInUI={false}
-            principalTypes={[PrincipalType.User]}
-            //defaultSelectedUsers={this.state.selectedUsers}
-            resolveDelay={1000}
-          />
-          <PeoplePicker
-            context={peoplePickerContext}
-            titleText="Projektmedlemmar"
-            personSelectionLimit={10}
-            //showtooltip={true}
-            required={true}
-            defaultSelectedUsers={editProject.projectMembers}
-            onChange={_getProjectMembers}
-            //showHiddenInUI={false}
-            principalTypes={[PrincipalType.User]}
-            //defaultSelectedUsers={this.state.selectedUsers}
-            resolveDelay={1000}
-          />
-          <div className={Styles.choice_group_container}>
-            <div className={Styles.choice_group_item}>
-              <ChoiceGroup
-                selectedKey={selectedKeyResources}
-                options={options}
-                onChange={onChangeChoiceGroupResources}
-                label="Resources"
+      {isEditing && (
+        <EditPanel
+          edit={onEdit}
+          onClose={() => handleClose()}
+          onSave={() => handleSave()}
+        >
+          <div className="w-4/4 mt-4">
+            <div>
+              <TextField
+                label="Rubrik"
+                // errorMessage="Error message"
+                required={true}
+                value={titleValue}
+                onChange={_onTitleTextFieldChange}
               />
-            </div>
-            <div className={Styles.choice_group_item}>
-              <ChoiceGroup
-                selectedKey={selectedKeyTime}
-                options={options}
-                onChange={onChangeChoiceGroupTime}
-                label="Time"
+              <TextField
+                label="Kund"
+                required={true}
+                value={customerValue}
+                onChange={_onCustomerTextFieldChange}
               />
-            </div>
-            <div className={Styles.choice_group_item}>
-              <ChoiceGroup
-                selectedKey={selectedKeyBudget}
-                options={options}
-                onChange={onChangeChoiceGroupBudget}
-                label="Budget"
+              <Dropdown
+                placeholder="välj projekttyp"
+                label="Projekttyp"
+                options={dropdownOption}
+                //selectedKey={selectedOption.ID}
+                onChange={_onOptionsChange}
+                required={true}
+                defaultSelectedKey={selectedOption.ID}
+                //defaultValue={editProject.projectTypeTitle}
+                // onChange={dropdownOpt}
               />
+              <PeoplePicker
+                context={peoplePickerContext}
+                titleText="Projektledare"
+                personSelectionLimit={2}
+                showtooltip={true}
+                required={true}
+                defaultSelectedUsers={[editProject.projectManager[0].EMail]}
+                onChange={_getProjectManager}
+                //showHiddenInUI={false}
+                principalTypes={[PrincipalType.User]}
+                //defaultSelectedUsers={this.state.selectedUsers}
+                resolveDelay={1000}
+              />
+              <PeoplePicker
+                context={peoplePickerContext}
+                titleText="Projektansvarig"
+                personSelectionLimit={1}
+                //showtooltip={true}
+                required={true}
+                defaultSelectedUsers={[editProject.projectLeader[0].EMail]}
+                onChange={_getResponsibleManager}
+                //showHiddenInUI={false}
+                principalTypes={[PrincipalType.User]}
+                //defaultSelectedUsers={this.state.selectedUsers}
+                resolveDelay={1000}
+              />
+              <PeoplePicker
+                context={peoplePickerContext}
+                titleText="Projektmedlemmar"
+                personSelectionLimit={10}
+                //showtooltip={true}
+                required={true}
+                defaultSelectedUsers={editProject.projectMembers}
+                onChange={_getProjectMembers}
+                //showHiddenInUI={false}
+                principalTypes={[PrincipalType.User]}
+                //defaultSelectedUsers={this.state.selectedUsers}
+                resolveDelay={1000}
+              />
+              <div className={Styles.choice_group_container}>
+                <div className={Styles.choice_group_item}>
+                  <ChoiceGroup
+                    selectedKey={selectedKeyResources}
+                    options={options}
+                    onChange={onChangeChoiceGroupResources}
+                    label="Resources"
+                  />
+                </div>
+                <div className={Styles.choice_group_item}>
+                  <ChoiceGroup
+                    selectedKey={selectedKeyTime}
+                    options={options}
+                    onChange={onChangeChoiceGroupTime}
+                    label="Time"
+                  />
+                </div>
+                <div className={Styles.choice_group_item}>
+                  <ChoiceGroup
+                    selectedKey={selectedKeyBudget}
+                    options={options}
+                    onChange={onChangeChoiceGroupBudget}
+                    label="Budget"
+                  />
+                </div>
+              </div>
+              <div className={Styles.choice_group_container}>
+                <div className={Styles.choice_group_item}>
+                  <ChoiceGroup
+                    selectedKey={selectedKeySteps}
+                    options={dropdownStepsOption}
+                    onChange={onChangeChoiceGroupSteps}
+                    label="Progress steps"
+                  />
+                </div>
+              </div>
+              {/* <div>
+            <Button onClick={handleSave}>save</Button>
+          </div> */}
             </div>
           </div>
-          {/* <div className={styles.buttonWrapper}>
-                <PrimaryButton
-                  text="Skapa projekt"
-                  disabled={
-                    !titleValue || !customerValue || !optValue
-                    //||
-                    // !projectManager.map((items: IUser) =>{return items.Id})[0] ||
-                    // !responsibleManager.map((items: IUser) =>{return items.Id})[0] ||
-                    // !projectMembers.map((items: IUser) =>{return items.Id})[0]
-                  }
-                  onClick={onSaveProject}
-                />
-              </div> */}
-        </div>
-      </div>
+        </EditPanel>
+      )}
     </>
   );
 };

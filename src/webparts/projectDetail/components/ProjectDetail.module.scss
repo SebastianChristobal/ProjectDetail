@@ -1,7 +1,5 @@
 @import '~@fluentui/react/dist/sass/References.scss';
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+
 
 .projectDetail {
   overflow: hidden;
@@ -12,6 +10,10 @@
     font-family: $ms-font-family-fallbacks;
   }
 }
+.item{
+  flex-grow: 4;
+  padding: 10px;
+}
 .header {
   font-size:26px;
   font-style: bold;
@@ -19,25 +21,39 @@
   color:white;
 }
 .item_header{
-  padding: 4px;
+  padding: 3px;
   margin: 0px;
   color:white;
 }
 .item_title{
-  padding: 4px;
+  padding: 3px;
   margin: 0px;
   color: white;
 }
-.container {
+.info_container {
   display: flex; /* or inline-flex */
   flex-wrap: wrap;
   gap: 16px;
-  background-color:#1c1a1a;
-  border-radius: 15px 15px 0px 0px;
+  background-color:#030412f5;
+  border-radius: 15px 0px 0px 0px;
+  flex: 30 1 auto;
 }
-.item{
-  flex-grow: 4;
-  padding: 20px;
+.project_info_container{
+  display: flex; /* or inline-flex */
+  flex-wrap: wrap;
+  gap: 16px;
+}
+.image_container{
+  display: flex; /* or inline-flex */
+  flex-wrap: wrap;
+  background-color:#f6f1f1;
+  border-radius: 0px 15px 0px 0px;
+}
+.right_container{
+  display: flex; /* or inline-flex */
+  flex-wrap: wrap;
+  flex-direction: column;
+  align-items: center;
 }
 .tabs{
   padding-top: 40px;
@@ -62,16 +78,17 @@
   color: white;
 }
 .progressIndicator{
-    border-radius: 0 0 20px 20px;
+    background-color: #f7f5f5;
+    border-color: #cabfbf;
     border-style: solid;
     border-top: none;
     border-bottom: none;
     border-width: thin;
-    line-height: 7px;
+    line-height: 25px;
     border-right: none;
-    margin-top: 30px;
+    margin-top: 10px;
     display: inline-block;
-    padding: 10px 20px 25px 20px;
+    padding: 0px 20px 25px 20px;
 }
 
 .image_container{
@@ -80,7 +97,8 @@
 }
 .edit_button{
   text-align: right;
-  padding: 60px 20px 0px 0px;
+  padding: 29px 0px 0px 0px;
+
 }
 .welcome {
   text-align: center;

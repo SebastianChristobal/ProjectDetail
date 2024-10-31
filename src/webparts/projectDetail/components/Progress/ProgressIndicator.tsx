@@ -4,18 +4,14 @@ import Styles from "./ProgressIndicator.module.scss";
 
 export const ProgressIndicator: React.FC<IProjectDetailProps> = ({
   project,
-  faser,
+  steps,
 }) => {
-  console.log(project);
-  console.log(faser);
-
   const step = project.Faser.Title;
-
   return (
     <>
       <h2 className={Styles.progressStep_title}>Progress steps</h2>
       <ol className={Styles.progress}>
-        {faser.map((items: any) => {
+        {steps.map((items: any) => {
           return (
             <li
               key={items.id}

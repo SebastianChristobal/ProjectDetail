@@ -9,6 +9,7 @@ export interface IProjectDetailProps {
   label?:string;
   edit?: any;
   onClose?:any;
+  onEdit?:any;
   isTextArea?:boolean;
   type?:any;
   className?:any;
@@ -16,7 +17,7 @@ export interface IProjectDetailProps {
   initialProjects?:any;
   project?:any;
   tasks?:any;
-  faser?:any;
+  steps?:any;
   activities?:any;
   filteredActivities?:any;
   filteredControlPoints?:any;
@@ -26,10 +27,11 @@ export interface IProjectDetailProps {
   selectedProjectId?:any;
   selectedObjectId?:any;
   projectTypes?: any;
- 
+  closePanel?: any;
   onAddNewProject?:(query: any) => void;
   onAddProject?:(query: any) => void;
   onCancelAddProject?:(query: any) => void;
-  handleSave?:(query: any) => void;
+  onSave?:(query?: any) => void;
   onClick?:(query: any) => void;
+
 }

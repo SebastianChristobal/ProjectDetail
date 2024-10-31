@@ -15,7 +15,6 @@ import { DummyActivities, DummyControlpoints } from "./Dummys/DummyTodos";
 
 const stackTokens: IStackTokens = {
   childrenGap: 20,
-  maxWidth: 250,
 };
 
 export const ProjectDetail: React.FC<IProjectDetailProps> = (props) => {
@@ -27,7 +26,7 @@ export const ProjectDetail: React.FC<IProjectDetailProps> = (props) => {
     context,
     []
   );
-  const { fetchData: getFaser } = useFetch(fetchFaser, context, []);
+  const { fetchData: getSteps } = useFetch(fetchFaser, context, []);
   const DUMMY_ACTIVITIES = DummyActivities;
   const DUMMY_CONTROLPOINTS = DummyControlpoints;
   const [projectTypes, setProjectTypes] = useState({});
@@ -69,7 +68,7 @@ export const ProjectDetail: React.FC<IProjectDetailProps> = (props) => {
     const id: string | undefined = window.location.href.split("=").pop();
     selectedObjectId = id ? parseInt(id, 10) : 0;
     selectedProject = projectState.projects.find(
-      (project: any) => project.Id === selectedObjectId
+      (project: any) => project.Id === 74
     );
   }
 
@@ -80,7 +79,7 @@ export const ProjectDetail: React.FC<IProjectDetailProps> = (props) => {
         // onDelete={ handleDeleteProject }
         // addTask={ handleAddTask }
         // deleteTask={ handleDeleteTask }
-        faser={getFaser}
+        steps={getSteps}
         project={selectedProject}
         projectTypes={projectTypes}
         activities={projectState.activities}
