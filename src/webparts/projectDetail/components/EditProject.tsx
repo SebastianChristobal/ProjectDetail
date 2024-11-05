@@ -56,10 +56,16 @@ export const EditProject: React.FC<IProjectDetailProps> = ({
   const [timeValue, setTimeValue] = React.useState<string>("");
   const [customerValue, setCustomerValue] = React.useState<string>("");
   const [projectManager, setProjectManager] = React.useState<IUser[]>([]);
+  const [selectedManager, setSelectedManager] = React.useState<IUser[]>([]);
   const [responsibleManager, setResponsibleManager] = React.useState<IUser[]>(
     []
   );
+  const [selectedResponsibleManager, setSelectedResponsibleManager] =
+    React.useState<IUser[]>([]);
   const [projectMembers, setprojectMembers] = React.useState<IUser[]>([]);
+  const [selectedProjectMembers, setSelectedProjectMembers] = React.useState<
+    IUser[]
+  >([]);
   const [dropdownOption, setDropdownOption] = React.useState<IDropdownOption[]>(
     []
   );
@@ -71,13 +77,13 @@ export const EditProject: React.FC<IProjectDetailProps> = ({
   );
 
   const _getProjectManager = (props: IUser[]): void => {
-    setProjectManager(props);
+    setSelectedManager(props);
   };
   const _getResponsibleManager = (props: IUser[]): void => {
-    setResponsibleManager(props);
+    setSelectedResponsibleManager(props);
   };
   const _getProjectMembers = (props: IUser[]): void => {
-    setprojectMembers(props);
+    setSelectedProjectMembers(props);
   };
   const [selectedKeyResources, setSelectedKeyResources] = React.useState<
     string | undefined
@@ -214,6 +220,63 @@ export const EditProject: React.FC<IProjectDetailProps> = ({
     closePanel();
   }, []);
 
+  const normalizeUserObject = (user: any): IUser => {
+    return {
+      ID: user.ID || user.Id || user.id,
+      EMail: user.EMail || user.secondaryText || user.loginName,
+      Title: user.Title || user.text,
+    };
+  };
+  const normalizeUserMembersObject = (user: any): IUser => {
+    const userData = user.data || {}; // Access the `data` object
+
+    return {
+      ID: userData.ID || userData.Id || userData.id || null,
+      EMail:
+        userData.Email ||
+        userData.UserPrincipalName ||
+        user.secondaryText ||
+        userData.LoginName ||
+        null,
+      Title: userData.Title || user.text || null,
+    };
+  };
+
+  const areUsersDifferent = (users1: any[], users2: any[]): boolean => {
+    if (users1.length !== users2.length) return true;
+
+    for (let i = 0; i < users1.length; i++) {
+      if (users1[i].ID !== users2[i].ID) {
+        return true;
+      }
+    }
+    return false;
+  };
+  const ensureAndNormalizeUsers = async (
+    enteredProjectMembers: any[]
+  ): Promise<IUser[]> => {
+    const promises = enteredProjectMembers.map(async (member) => {
+      const user = await sp.web.ensureUser(
+        member.secondaryText || "default@domain.com"
+      );
+      console.log("ensureUser result:", user);
+      return normalizeUserMembersObject(user);
+    });
+
+    return Promise.all(promises);
+  };
+  const ensureAndNormalizeProjectMembers = async (
+    selectedProjectMembers: any[],
+    projectMembers: any[]
+  ): Promise<IUser[]> => {
+    const membersToProcess =
+      selectedProjectMembers.length > 0 &&
+      areUsersDifferent(selectedProjectMembers, projectMembers)
+        ? selectedProjectMembers
+        : projectMembers;
+
+    return ensureAndNormalizeUsers(membersToProcess);
+  };
   const handleSave = async (): Promise<void> => {
     setIsEditing(false);
     closePanel();
@@ -226,60 +289,61 @@ export const EditProject: React.FC<IProjectDetailProps> = ({
     const enteredProjectType = selectedOption.ID || editProject.projectType.ID;
 
     const enteredProjectManager =
-      projectManager.length > 0
-        ? projectManager[0].EMail
-        : editProject.projectManager[0].EMail;
+      selectedManager.length === 0
+        ? normalizeUserObject(projectManager[0])
+        : normalizeUserObject(selectedManager[0]);
+    const selectedProjectManager = await sp.web.ensureUser(
+      enteredProjectManager.Title || "default@domain.com"
+    );
 
     const enteredResponsibleManager =
-      responsibleManager.length > 0
-        ? responsibleManager[0].EMail
-        : editProject.projectLeader[0].Email;
+      selectedResponsibleManager.length === 0
+        ? normalizeUserObject(responsibleManager[0])
+        : normalizeUserObject(selectedResponsibleManager[0]);
 
-    const enteredProjectMembers =
-      projectMembers.length > 0
-        ? projectMembers[0].EMail
-        : editProject.projectMembers[0].Email;
+    const selectedResManager = await sp.web.ensureUser(
+      enteredResponsibleManager.Title || "default@domain.com"
+    );
 
+    const normalizedProjectMembers = await ensureAndNormalizeProjectMembers(
+      selectedProjectMembers,
+      projectMembers
+    );
+
+    const selectedProjMembers = normalizedProjectMembers;
+    console.log(selectedProjMembers);
     const enteredResources = resourcesValue || editProject.resources;
     const enteredTime = timeValue || editProject.time;
     const enteredBudget = budgetValue || editProject.budget;
     //const enteredSteps = selectedKeySteps || editProject.steps.Title;
 
-    const selectedProjectManager = await sp.web.ensureUser(
-      enteredProjectManager
-    );
-    const selectedResponsibleManager = await sp.web.ensureUser(
-      enteredResponsibleManager
-    );
-    const selectedProjectMembers = await Promise.all(
-      enteredProjectMembers.map(async (member: any) => {
-        const user = await sp.web.ensureUser(member);
-        return user.data.Id;
-      })
-    );
+    // const selectedProjectMembers = await Promise.all(
+    //   enteredProjectMembers.map(async (member: any) => {
+    //     const user = await sp.web.ensureUser(member);
+    //     return user.data.Email;
+    //   })
+    // );
 
     console.log(
-      selectedProjectMembers,
-      selectedResponsibleManager,
-      selectedProjectManager,
-      enteredResources,
-      enteredTime,
-      enteredBudget,
+      // enteredResources,
+      // enteredTime,
+      // enteredBudget,
       enteredProjectType
     );
     const newProject = {
       Title: enteredTitle,
       Customer: enteredCustomer,
       //ProjectType: { ID: enteredProjectType },
-      ProjectManager: selectedProjectManager.data.Id,
-      // ProjectLeader: selectedResponsibleManager.data.Id,
-      // ProjectMembers: selectedProjectMembers,
+      ProjectManagerId: selectedProjectManager.data.Id,
+      ProjectLeaderId: selectedResManager.data.Id,
+      ProjectMembers: selectedProjMembers.map((members) => {
+        return members.ID;
+      }),
       // //Faser: Number(enteredSteps),
       Resources: enteredResources,
       Time: enteredTime,
       Budget: enteredBudget,
     };
-    console.log(newProject);
 
     try {
       await onUpdateProject(newProject, editProject.projectID, context);

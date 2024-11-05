@@ -1,5 +1,6 @@
 export interface IUser{
     Id?:any;
+    id?:any;
     ID?: any;
     Title?: string;
     imageInitials?: string; 

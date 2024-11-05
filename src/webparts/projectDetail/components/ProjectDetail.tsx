@@ -68,7 +68,7 @@ export const ProjectDetail: React.FC<IProjectDetailProps> = (props) => {
     const id: string | undefined = window.location.href.split("=").pop();
     selectedObjectId = id ? parseInt(id, 10) : 0;
     selectedProject = projectState.projects.find(
-      (project: any) => project.Id === 74
+      (project: any) => project.Id === selectedObjectId
     );
   }
 
