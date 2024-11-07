@@ -66,14 +66,12 @@ export const EditProject: React.FC<IProjectDetailProps> = ({
   const [selectedProjectMembers, setSelectedProjectMembers] = React.useState<
     IUser[]
   >([]);
-  const [dropdownOption, setDropdownOption] = React.useState<IDropdownOption[]>(
+  const [projectTypeOptions, setProjectTypeOptions] = React.useState<any>([]);
+  const [dropdownProjectTypeOptions, setDropdownProjectTypeOptions] =
+    React.useState<any>([]);
+  const [stepsOptions, setStepsOptions] = React.useState<any>([]);
+  const [dropdownStepsOptions, setDropdownStepsOptions] = React.useState<any[]>(
     []
-  );
-  const [dropdownStepsOption, setDropdownStepsOption] = React.useState<any[]>(
-    []
-  );
-  const [selectedOption, setSelectedOption] = React.useState<any>(
-    project.ProjectType
   );
 
   const _getProjectManager = (props: IUser[]): void => {
@@ -96,10 +94,6 @@ export const EditProject: React.FC<IProjectDetailProps> = ({
   const [selectedKeyBudget, setSelectedKeyBudget] = React.useState<
     string | undefined
   >(() => getStatusChoiceGroup(project.Budget));
-
-  const [selectedKeySteps, setSelectedKeySteps] = React.useState<
-    string | undefined
-  >(() => project.Faser.Title);
 
   const peoplePickerContext: IPeoplePickerContext = {
     absoluteUrl: context.pageContext.web.absoluteUrl,
@@ -138,8 +132,8 @@ export const EditProject: React.FC<IProjectDetailProps> = ({
       setSelectedKeyResources(getStatusChoiceGroup(newEditProject.resources));
       setSelectedKeyTime(getStatusChoiceGroup(newEditProject.time));
       setSelectedKeyBudget(getStatusChoiceGroup(newEditProject.budget));
-      setSelectedKeySteps(project.Faser.ID);
-      setSelectedOption(newEditProject.projectType);
+      setStepsOptions(project.Faser.ID);
+      setProjectTypeOptions(newEditProject.projectType);
     }
   }, [project]);
 
@@ -153,7 +147,7 @@ export const EditProject: React.FC<IProjectDetailProps> = ({
       text: option.Title,
     }));
 
-    setDropdownOption(dropdownOptions);
+    setDropdownProjectTypeOptions(dropdownOptions);
   }, [projectTypes]);
 
   React.useEffect(() => {
@@ -162,11 +156,11 @@ export const EditProject: React.FC<IProjectDetailProps> = ({
       text: option.Title,
     }));
 
-    setDropdownStepsOption(dropdownOptions);
+    setDropdownStepsOptions(dropdownOptions);
   }, [projectTypes]);
   const onChangeChoiceGroupSteps = React.useCallback(
     (ev: React.SyntheticEvent<HTMLElement>, option: IChoiceGroupOption) => {
-      setSelectedKeySteps(option.key);
+      setStepsOptions(option.key);
     },
     []
   );
@@ -207,12 +201,12 @@ export const EditProject: React.FC<IProjectDetailProps> = ({
     setCustomerValue(newValue);
   };
 
-  const _onOptionsChange = (
+  const _onselectedProjectTypeOptionsChange = (
     event: React.FormEvent<HTMLDivElement>,
     option?: IDropdownOption,
     index?: number
   ): void => {
-    setSelectedOption(option?.key);
+    setProjectTypeOptions(option?.key);
   };
 
   const handleClose = React.useCallback(() => {
@@ -235,7 +229,7 @@ export const EditProject: React.FC<IProjectDetailProps> = ({
       EMail:
         userData.Email ||
         userData.UserPrincipalName ||
-        user.secondaryText ||
+        userData.secondaryText ||
         userData.LoginName ||
         null,
       Title: userData.Title || user.text || null,
@@ -256,14 +250,23 @@ export const EditProject: React.FC<IProjectDetailProps> = ({
     enteredProjectMembers: any[]
   ): Promise<IUser[]> => {
     const promises = enteredProjectMembers.map(async (member) => {
-      const user = await sp.web.ensureUser(
-        member.secondaryText || "default@domain.com"
-      );
-      console.log("ensureUser result:", user);
+      let user;
+      if (typeof member === "string") {
+        user = await sp.web.ensureUser(member || "");
+      } else if (typeof member === "object" && member !== null) {
+        // If member is an object, check if it has `secondaryText`
+        user = await sp.web.ensureUser(member.secondaryText || "");
+      } else {
+        // Handle case if member is neither a string nor an object
+        console.error("Invalid member type", member);
+        return null; // Or throw an error, depending on your needs
+      }
+
       return normalizeUserMembersObject(user);
     });
 
-    return Promise.all(promises);
+    const results = await Promise.all(promises);
+    return results.filter((user): user is IUser => user !== null);
   };
   const ensureAndNormalizeProjectMembers = async (
     selectedProjectMembers: any[],
@@ -286,14 +289,19 @@ export const EditProject: React.FC<IProjectDetailProps> = ({
     const enteredCustomer =
       customerValue.trim() !== "" ? customerValue : editProject.customer;
 
-    const enteredProjectType = selectedOption.ID || editProject.projectType.ID;
+    const enteredProjectType =
+      typeof projectTypeOptions === "object" &&
+      projectTypeOptions !== null &&
+      "ID" in projectTypeOptions
+        ? projectTypeOptions.ID
+        : projectTypeOptions;
 
     const enteredProjectManager =
       selectedManager.length === 0
         ? normalizeUserObject(projectManager[0])
         : normalizeUserObject(selectedManager[0]);
     const selectedProjectManager = await sp.web.ensureUser(
-      enteredProjectManager.Title || "default@domain.com"
+      enteredProjectManager.Title || ""
     );
 
     const enteredResponsibleManager =
@@ -302,7 +310,7 @@ export const EditProject: React.FC<IProjectDetailProps> = ({
         : normalizeUserObject(selectedResponsibleManager[0]);
 
     const selectedResManager = await sp.web.ensureUser(
-      enteredResponsibleManager.Title || "default@domain.com"
+      enteredResponsibleManager.Title || ""
     );
 
     const normalizedProjectMembers = await ensureAndNormalizeProjectMembers(
@@ -310,13 +318,18 @@ export const EditProject: React.FC<IProjectDetailProps> = ({
       projectMembers
     );
 
-    const selectedProjMembers = normalizedProjectMembers;
-    console.log(selectedProjMembers);
+    const selectedProjMembers: string[] = normalizedProjectMembers.map(
+      (members) => {
+        return members.ID;
+      }
+    );
+
     const enteredResources = resourcesValue || editProject.resources;
     const enteredTime = timeValue || editProject.time;
     const enteredBudget = budgetValue || editProject.budget;
-    //const enteredSteps = selectedKeySteps || editProject.steps.Title;
+    const enteredSteps = stepsOptions;
 
+    console.log(enteredSteps);
     // const selectedProjectMembers = await Promise.all(
     //   enteredProjectMembers.map(async (member: any) => {
     //     const user = await sp.web.ensureUser(member);
@@ -325,6 +338,7 @@ export const EditProject: React.FC<IProjectDetailProps> = ({
     // );
 
     console.log(
+      selectedProjMembers,
       // enteredResources,
       // enteredTime,
       // enteredBudget,
@@ -333,13 +347,11 @@ export const EditProject: React.FC<IProjectDetailProps> = ({
     const newProject = {
       Title: enteredTitle,
       Customer: enteredCustomer,
-      //ProjectType: { ID: enteredProjectType },
+      ProjectTypeId: enteredProjectType,
       ProjectManagerId: selectedProjectManager.data.Id,
       ProjectLeaderId: selectedResManager.data.Id,
-      ProjectMembers: selectedProjMembers.map((members) => {
-        return members.ID;
-      }),
-      // //Faser: Number(enteredSteps),
+      ProjectMembersId: selectedProjMembers,
+      FaserId: enteredSteps,
       Resources: enteredResources,
       Time: enteredTime,
       Budget: enteredBudget,
@@ -378,21 +390,25 @@ export const EditProject: React.FC<IProjectDetailProps> = ({
               <Dropdown
                 placeholder="välj projekttyp"
                 label="Projekttyp"
-                options={dropdownOption}
+                options={dropdownProjectTypeOptions}
                 //selectedKey={selectedOption.ID}
-                onChange={_onOptionsChange}
+                onChange={_onselectedProjectTypeOptionsChange}
                 required={true}
-                defaultSelectedKey={selectedOption.ID}
+                defaultSelectedKey={projectTypeOptions.ID}
                 //defaultValue={editProject.projectTypeTitle}
                 // onChange={dropdownOpt}
               />
               <PeoplePicker
                 context={peoplePickerContext}
-                titleText="Projektledare"
+                titleText="Projektansvarig"
                 personSelectionLimit={2}
                 showtooltip={true}
                 required={true}
-                defaultSelectedUsers={[editProject.projectManager[0].EMail]}
+                defaultSelectedUsers={[
+                  editProject.projectManager[0].EMail !== null
+                    ? editProject.projectManager[0].EMail
+                    : editProject.projectManager[0].Title,
+                ]}
                 onChange={_getProjectManager}
                 //showHiddenInUI={false}
                 principalTypes={[PrincipalType.User]}
@@ -401,11 +417,15 @@ export const EditProject: React.FC<IProjectDetailProps> = ({
               />
               <PeoplePicker
                 context={peoplePickerContext}
-                titleText="Projektansvarig"
+                titleText="Projektledare"
                 personSelectionLimit={1}
                 //showtooltip={true}
                 required={true}
-                defaultSelectedUsers={[editProject.projectLeader[0].EMail]}
+                defaultSelectedUsers={[
+                  editProject.projectLeader[0].EMail !== null
+                    ? editProject.projectLeader[0].EMail
+                    : editProject.projectLeader[0].Title,
+                ]}
                 onChange={_getResponsibleManager}
                 //showHiddenInUI={false}
                 principalTypes={[PrincipalType.User]}
@@ -454,8 +474,8 @@ export const EditProject: React.FC<IProjectDetailProps> = ({
               <div className={Styles.choice_group_container}>
                 <div className={Styles.choice_group_item}>
                   <ChoiceGroup
-                    selectedKey={selectedKeySteps}
-                    options={dropdownStepsOption}
+                    selectedKey={stepsOptions}
+                    options={dropdownStepsOptions}
                     onChange={onChangeChoiceGroupSteps}
                     label="Progress steps"
                   />

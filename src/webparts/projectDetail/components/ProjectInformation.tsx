@@ -64,13 +64,13 @@ export const ProjectInformation: React.FC<IProjectDetailProps> = ({
                 <Label className={Styles.item_title}>
                   {projectInfo.Customer}
                 </Label>
-                <h3 className={Styles.item_header}>Projektledare</h3>
-                <Label className={Styles.item_title}>
-                  {projectInfo.ProjectLeader.Title}
-                </Label>
                 <h3 className={Styles.item_header}>Projektansvarig</h3>
                 <Label className={Styles.item_title}>
                   {projectInfo.ProjectManager.Title}
+                </Label>
+                <h3 className={Styles.item_header}>Projektledare</h3>
+                <Label className={Styles.item_title}>
+                  {projectInfo.ProjectLeader.Title}
                 </Label>
                 <h3 className={Styles.item_header}> Projektmedlemmar</h3>
                 <Label className={Styles.item_title}>
