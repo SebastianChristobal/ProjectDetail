@@ -47,9 +47,7 @@ export const EditProject: React.FC<IProjectDetailProps> = ({
   };
 
   const [isEditing, setIsEditing] = React.useState<boolean>(onEdit);
-  const [editProject, setEditProject] = React.useState<any | undefined>(
-    undefined
-  );
+  const [selectedProjectId, setSelectedProjectId] = React.useState<any>();
   const [titleValue, setTitleValue] = React.useState<string>("");
   const [budgetValue, setBudgetValue] = React.useState<string>("");
   const [resourcesValue, setResourcesValue] = React.useState<string>("");
@@ -62,7 +60,7 @@ export const EditProject: React.FC<IProjectDetailProps> = ({
   );
   const [selectedResponsibleManager, setSelectedResponsibleManager] =
     React.useState<IUser[]>([]);
-  const [projectMembers, setprojectMembers] = React.useState<IUser[]>([]);
+  const [projectMembers, setprojectMembers] = React.useState<string[]>([]);
   const [selectedProjectMembers, setSelectedProjectMembers] = React.useState<
     IUser[]
   >([]);
@@ -103,37 +101,24 @@ export const EditProject: React.FC<IProjectDetailProps> = ({
 
   React.useEffect(() => {
     if (project) {
-      // Skapa objektet och sätt det i state
-      const newEditProject: any = {
-        projectID: project.ID,
-        title: project.Title,
-        customer: project.Customer,
-        projectManager: [project.ProjectManager],
-        projectLeader: [project.ProjectLeader],
-        projectMembers: project.ProjectMembers.map((members: IUser) => {
+      setSelectedProjectId(project.ID);
+      setTitleValue(project.Title);
+      setCustomerValue(project.Customer);
+      setProjectManager([project.ProjectManager]);
+      setResponsibleManager([project.ProjectLeader]);
+      setprojectMembers(
+        project.ProjectMembers.map((members: IUser) => {
           return members.Title;
-        }),
-        projectType: project.ProjectType,
-        resources: project.Resources,
-        time: project.Time,
-        budget: project.Budget,
-        steps: project.Faser,
-      };
-
-      setEditProject(newEditProject);
-      setTitleValue(newEditProject.title);
-      setCustomerValue(newEditProject.customer);
-      setProjectManager(newEditProject.projectManager);
-      setResponsibleManager(newEditProject.projectLeader);
-      setprojectMembers(newEditProject.projectMembers);
-      setBudgetValue(newEditProject.budget);
-      setTimeValue(newEditProject.time);
-      setResourcesValue(newEditProject.resources);
-      setSelectedKeyResources(getStatusChoiceGroup(newEditProject.resources));
-      setSelectedKeyTime(getStatusChoiceGroup(newEditProject.time));
-      setSelectedKeyBudget(getStatusChoiceGroup(newEditProject.budget));
+        })
+      );
+      setBudgetValue(project.Budget);
+      setTimeValue(project.Time);
+      setResourcesValue(project.Resources);
+      setSelectedKeyResources(getStatusChoiceGroup(project.Resources));
+      setSelectedKeyTime(getStatusChoiceGroup(project.Time));
+      setSelectedKeyBudget(getStatusChoiceGroup(project.Budget));
       setStepsOptions(project.Faser.ID);
-      setProjectTypeOptions(newEditProject.projectType);
+      setProjectTypeOptions(project.ProjectType);
     }
   }, [project]);
 
@@ -158,6 +143,7 @@ export const EditProject: React.FC<IProjectDetailProps> = ({
 
     setDropdownStepsOptions(dropdownOptions);
   }, [projectTypes]);
+
   const onChangeChoiceGroupSteps = React.useCallback(
     (ev: React.SyntheticEvent<HTMLElement>, option: IChoiceGroupOption) => {
       setStepsOptions(option.key);
@@ -185,7 +171,6 @@ export const EditProject: React.FC<IProjectDetailProps> = ({
     },
     []
   );
-
   const _onTitleTextFieldChange = (
     event: React.FormEvent<HTMLInputElement | HTMLTextAreaElement>,
     newValue?: any
@@ -200,7 +185,6 @@ export const EditProject: React.FC<IProjectDetailProps> = ({
     console.log("Customer Value Changed:", newValue); // Logga för felsökning
     setCustomerValue(newValue);
   };
-
   const _onselectedProjectTypeOptionsChange = (
     event: React.FormEvent<HTMLDivElement>,
     option?: IDropdownOption,
@@ -208,12 +192,10 @@ export const EditProject: React.FC<IProjectDetailProps> = ({
   ): void => {
     setProjectTypeOptions(option?.key);
   };
-
   const handleClose = React.useCallback(() => {
     setIsEditing(false);
     closePanel();
   }, []);
-
   const normalizeUserObject = (user: any): IUser => {
     return {
       ID: user.ID || user.Id || user.id,
@@ -223,7 +205,6 @@ export const EditProject: React.FC<IProjectDetailProps> = ({
   };
   const normalizeUserMembersObject = (user: any): IUser => {
     const userData = user.data || {}; // Access the `data` object
-
     return {
       ID: userData.ID || userData.Id || userData.id || null,
       EMail:
@@ -235,7 +216,6 @@ export const EditProject: React.FC<IProjectDetailProps> = ({
       Title: userData.Title || user.text || null,
     };
   };
-
   const areUsersDifferent = (users1: any[], users2: any[]): boolean => {
     if (users1.length !== users2.length) return true;
 
@@ -261,10 +241,8 @@ export const EditProject: React.FC<IProjectDetailProps> = ({
         console.error("Invalid member type", member);
         return null; // Or throw an error, depending on your needs
       }
-
       return normalizeUserMembersObject(user);
     });
-
     const results = await Promise.all(promises);
     return results.filter((user): user is IUser => user !== null);
   };
@@ -283,11 +261,6 @@ export const EditProject: React.FC<IProjectDetailProps> = ({
   const handleSave = async (): Promise<void> => {
     setIsEditing(false);
     closePanel();
-    const enteredTitle =
-      titleValue.trim() !== "" ? titleValue : editProject.title;
-
-    const enteredCustomer =
-      customerValue.trim() !== "" ? customerValue : editProject.customer;
 
     const enteredProjectType =
       typeof projectTypeOptions === "object" &&
@@ -323,27 +296,13 @@ export const EditProject: React.FC<IProjectDetailProps> = ({
         return members.ID;
       }
     );
-
-    const enteredResources = resourcesValue || editProject.resources;
-    const enteredTime = timeValue || editProject.time;
-    const enteredBudget = budgetValue || editProject.budget;
+    const enteredTitle = titleValue;
+    const enteredCustomer = customerValue;
+    const enteredResources = resourcesValue;
+    const enteredTime = timeValue;
+    const enteredBudget = budgetValue;
     const enteredSteps = stepsOptions;
 
-    console.log(enteredSteps);
-    // const selectedProjectMembers = await Promise.all(
-    //   enteredProjectMembers.map(async (member: any) => {
-    //     const user = await sp.web.ensureUser(member);
-    //     return user.data.Email;
-    //   })
-    // );
-
-    console.log(
-      selectedProjMembers,
-      // enteredResources,
-      // enteredTime,
-      // enteredBudget,
-      enteredProjectType
-    );
     const newProject = {
       Title: enteredTitle,
       Customer: enteredCustomer,
@@ -358,7 +317,7 @@ export const EditProject: React.FC<IProjectDetailProps> = ({
     };
 
     try {
-      await onUpdateProject(newProject, editProject.projectID, context);
+      await onUpdateProject(newProject, selectedProjectId, context);
     } catch (error) {
       console.error("Error saving project:", error);
     }
@@ -404,11 +363,7 @@ export const EditProject: React.FC<IProjectDetailProps> = ({
                 personSelectionLimit={2}
                 showtooltip={true}
                 required={true}
-                defaultSelectedUsers={[
-                  editProject.projectManager[0].EMail !== null
-                    ? editProject.projectManager[0].EMail
-                    : editProject.projectManager[0].Title,
-                ]}
+                defaultSelectedUsers={[projectManager[0]?.Title || ""]}
                 onChange={_getProjectManager}
                 //showHiddenInUI={false}
                 principalTypes={[PrincipalType.User]}
@@ -421,11 +376,7 @@ export const EditProject: React.FC<IProjectDetailProps> = ({
                 personSelectionLimit={1}
                 //showtooltip={true}
                 required={true}
-                defaultSelectedUsers={[
-                  editProject.projectLeader[0].EMail !== null
-                    ? editProject.projectLeader[0].EMail
-                    : editProject.projectLeader[0].Title,
-                ]}
+                defaultSelectedUsers={[responsibleManager[0]?.Title || ""]}
                 onChange={_getResponsibleManager}
                 //showHiddenInUI={false}
                 principalTypes={[PrincipalType.User]}
@@ -438,7 +389,7 @@ export const EditProject: React.FC<IProjectDetailProps> = ({
                 personSelectionLimit={10}
                 //showtooltip={true}
                 required={true}
-                defaultSelectedUsers={editProject.projectMembers}
+                defaultSelectedUsers={projectMembers}
                 onChange={_getProjectMembers}
                 //showHiddenInUI={false}
                 principalTypes={[PrincipalType.User]}
