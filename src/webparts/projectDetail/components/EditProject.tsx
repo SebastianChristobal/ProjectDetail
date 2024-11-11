@@ -305,7 +305,7 @@ export const EditProject: React.FC<IProjectDetailProps> = ({
     const enteredTime = timeValue;
     const enteredBudget = budgetValue;
     const enteredStepID = stepsOptions.ID;
-    const enteredStepTitle = stepsOptions.Title;
+    const enteredStep = stepsOptions;
     const enteredProjectTypeID = projectTypeOptions.ID;
     const enteredProjectType = projectTypeOptions;
 
@@ -329,7 +329,7 @@ export const EditProject: React.FC<IProjectDetailProps> = ({
       ProjectManager: selectedProjectManager.data,
       ProjectLeader: selectedResManager.data,
       ProjectMembers: selectedProjMembersForUpdate,
-      Faser: enteredStepTitle,
+      Faser: enteredStep,
       Resources: enteredResources,
       Time: enteredTime,
       Budget: enteredBudget,

@@ -57,10 +57,11 @@ export const ProjectDetail: React.FC<IProjectDetailProps> = (props) => {
 
   useEffect(() => {
     if (projectState.projects.length > 0) {
-      //const id = window.location.href.split("=").pop();
-      //const selectedObjectId = id ? parseInt(id, 10) : 0;
+      const id = window.location.href.split("=").pop();
+      //const dummyID = 74;
+      const selectedObjectId = id ? parseInt(id, 10) : 0;
       const project = projectState.projects.find(
-        (project: any) => project.Id === 74
+        (project: any) => project.Id === selectedObjectId
       );
       setSelectedProject(project);
     }
