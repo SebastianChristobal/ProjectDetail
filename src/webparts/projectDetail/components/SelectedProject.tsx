@@ -2,7 +2,7 @@ import * as React from "react";
 import { IProjectDetailProps } from "./IProjectDetailProps";
 import Styles from "./ProjectDetail.module.scss";
 import { Tasks } from "./Tasks/Tasks";
-import { ProgressIndicator } from "./Progress/ProgressIndicator";
+import { ProjectProgress } from "./Progress/ProgressIndicator";
 //import { Button } from "../UI/Button";
 import {
   Pivot,
@@ -45,6 +45,7 @@ export const SelectedProject: React.FC<IProjectDetailProps> = ({
   // onDelete,
   // addTask,
   // deleteTask,
+  updateSelectedProject,
   steps,
   projectTypes,
   controlPoints,
@@ -71,11 +72,10 @@ export const SelectedProject: React.FC<IProjectDetailProps> = ({
           project={project}
           projectTypes={projectTypes}
           steps={steps}
+          updateSelectedProject={updateSelectedProject}
           {...props}
         />
-        <div className={Styles.progressIndicator}>
-          <ProgressIndicator project={project} steps={steps} />
-        </div>
+        <ProjectProgress project={project} steps={steps} />
         <div className={Styles.tabs}>
           <Pivot
             defaultSelectedKey={"0"}

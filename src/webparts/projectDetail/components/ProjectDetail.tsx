@@ -36,7 +36,9 @@ export const ProjectDetail: React.FC<IProjectDetailProps> = (props) => {
     activities: DUMMY_ACTIVITIES,
     controlPoints: DUMMY_CONTROLPOINTS,
   });
-
+  const [selectedProject, setSelectedProject] = useState<any | undefined>(
+    undefined
+  );
   useEffect(() => {
     // Update project types if the fetched data is available
     if (getProjectTypes && Object.keys(getProjectTypes).length > 0) {
@@ -53,24 +55,45 @@ export const ProjectDetail: React.FC<IProjectDetailProps> = (props) => {
     }
   }, [getAllProjects]);
 
-  // const handleSelectedProject = useCallback((Id: any): void => {
-  //   setProjectState((prevProjectState) => {
-  //     return {
-  //       ...prevProjectState,
-  //       selectedProjectId: Id,
-  //     };
-  //   });
-  // }, []);
+  useEffect(() => {
+    if (projectState.projects.length > 0) {
+      //const id = window.location.href.split("=").pop();
+      //const selectedObjectId = id ? parseInt(id, 10) : 0;
+      const project = projectState.projects.find(
+        (project: any) => project.Id === 74
+      );
+      setSelectedProject(project);
+    }
+  }, [projectState.projects]);
 
-  let selectedProject: any;
-  let selectedObjectId: any;
-  if (projectState.projects.length > 0) {
-    const id: string | undefined = window.location.href.split("=").pop();
-    selectedObjectId = id ? parseInt(id, 10) : 0;
-    selectedProject = projectState.projects.find(
-      (project: any) => project.Id === selectedObjectId
-    );
-  }
+  // Define a function to update the selected project
+  const updateSelectedProject = (updatedProject: any): any => {
+    setProjectState((prevState) => {
+      // Find the index of the project to be updated
+      const projectIndex = prevState.projects.findIndex(
+        (project) => project.Id === updatedProject.ID
+      );
+
+      // If the project is not found, return the previous state unchanged
+      if (projectIndex === -1) {
+        return prevState;
+      }
+
+      // Create a shallow copy of the projects array and update only the specific project
+      const updatedProjects = [...prevState.projects];
+      updatedProjects[projectIndex] = updatedProject;
+      setSelectedProject(updatedProjects[projectIndex]);
+      return {
+        ...prevState,
+        projects: updatedProjects,
+      };
+    });
+
+    // Update the selected project after the projectState update
+    setSelectedProject(updatedProject);
+
+    return updatedProject; // Optionally return the updated project
+  };
 
   const content =
     projectState.projects.length > 0 ? (
@@ -84,7 +107,8 @@ export const ProjectDetail: React.FC<IProjectDetailProps> = (props) => {
         projectTypes={projectTypes}
         activities={projectState.activities}
         controlPoints={projectState.controlPoints}
-        selectedObjectId={selectedObjectId}
+        //selectedObjectId={selectedObjectId}
+        updateSelectedProject={updateSelectedProject}
       />
     ) : (
       <Stack tokens={stackTokens}>

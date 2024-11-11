@@ -28,6 +28,7 @@ export interface IProjectDetailProps {
   selectedObjectId?:any;
   projectTypes?: any;
   closePanel?: any;
+  updateSelectedProject?: any;
   onAddNewProject?:(query: any) => void;
   onAddProject?:(query: any) => void;
   onCancelAddProject?:(query: any) => void;

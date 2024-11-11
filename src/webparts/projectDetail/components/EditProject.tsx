@@ -31,6 +31,7 @@ export const EditProject: React.FC<IProjectDetailProps> = ({
   steps,
   closePanel,
   projectTypes,
+  updateSelectedProject,
 }) => {
   const sp = spfi().using(SPFx(context));
   const getStatusChoiceGroup = (status: string): any => {
@@ -117,7 +118,7 @@ export const EditProject: React.FC<IProjectDetailProps> = ({
       setSelectedKeyResources(getStatusChoiceGroup(project.Resources));
       setSelectedKeyTime(getStatusChoiceGroup(project.Time));
       setSelectedKeyBudget(getStatusChoiceGroup(project.Budget));
-      setStepsOptions(project.Faser.ID);
+      setStepsOptions(project.Faser);
       setProjectTypeOptions(project.ProjectType);
     }
   }, [project]);
@@ -146,7 +147,11 @@ export const EditProject: React.FC<IProjectDetailProps> = ({
 
   const onChangeChoiceGroupSteps = React.useCallback(
     (ev: React.SyntheticEvent<HTMLElement>, option: IChoiceGroupOption) => {
-      setStepsOptions(option.key);
+      const selectedStep = {
+        ID: option.key,
+        Title: option.text,
+      };
+      setStepsOptions(selectedStep);
     },
     []
   );
@@ -190,7 +195,7 @@ export const EditProject: React.FC<IProjectDetailProps> = ({
     option?: IDropdownOption,
     index?: number
   ): void => {
-    setProjectTypeOptions(option?.key);
+    setProjectTypeOptions(option);
   };
   const handleClose = React.useCallback(() => {
     setIsEditing(false);
@@ -262,13 +267,6 @@ export const EditProject: React.FC<IProjectDetailProps> = ({
     setIsEditing(false);
     closePanel();
 
-    const enteredProjectType =
-      typeof projectTypeOptions === "object" &&
-      projectTypeOptions !== null &&
-      "ID" in projectTypeOptions
-        ? projectTypeOptions.ID
-        : projectTypeOptions;
-
     const enteredProjectManager =
       selectedManager.length === 0
         ? normalizeUserObject(projectManager[0])
@@ -296,28 +294,50 @@ export const EditProject: React.FC<IProjectDetailProps> = ({
         return members.ID;
       }
     );
+    const selectedProjMembersForUpdate: IUser[] = normalizedProjectMembers.map(
+      (members) => {
+        return members;
+      }
+    );
     const enteredTitle = titleValue;
     const enteredCustomer = customerValue;
     const enteredResources = resourcesValue;
     const enteredTime = timeValue;
     const enteredBudget = budgetValue;
-    const enteredSteps = stepsOptions;
+    const enteredStepID = stepsOptions.ID;
+    const enteredStepTitle = stepsOptions.Title;
+    const enteredProjectTypeID = projectTypeOptions.ID;
+    const enteredProjectType = projectTypeOptions;
 
-    const newProject = {
+    const updateProject = {
       Title: enteredTitle,
       Customer: enteredCustomer,
-      ProjectTypeId: enteredProjectType,
+      ProjectTypeId: enteredProjectTypeID,
       ProjectManagerId: selectedProjectManager.data.Id,
       ProjectLeaderId: selectedResManager.data.Id,
       ProjectMembersId: selectedProjMembers,
-      FaserId: enteredSteps,
+      FaserId: enteredStepID,
       Resources: enteredResources,
       Time: enteredTime,
       Budget: enteredBudget,
     };
 
+    const selectedProject = {
+      Title: enteredTitle,
+      Customer: enteredCustomer,
+      ProjectType: enteredProjectType,
+      ProjectManager: selectedProjectManager.data,
+      ProjectLeader: selectedResManager.data,
+      ProjectMembers: selectedProjMembersForUpdate,
+      Faser: enteredStepTitle,
+      Resources: enteredResources,
+      Time: enteredTime,
+      Budget: enteredBudget,
+      ID: selectedProjectId,
+    };
     try {
-      await onUpdateProject(newProject, selectedProjectId, context);
+      await onUpdateProject(updateProject, selectedProjectId, context);
+      updateSelectedProject(selectedProject);
     } catch (error) {
       console.error("Error saving project:", error);
     }
@@ -425,7 +445,7 @@ export const EditProject: React.FC<IProjectDetailProps> = ({
               <div className={Styles.choice_group_container}>
                 <div className={Styles.choice_group_item}>
                   <ChoiceGroup
-                    selectedKey={stepsOptions}
+                    selectedKey={stepsOptions.ID}
                     options={dropdownStepsOptions}
                     onChange={onChangeChoiceGroupSteps}
                     label="Progress steps"
